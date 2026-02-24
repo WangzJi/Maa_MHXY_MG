@@ -423,7 +423,9 @@
                     "name": "Yes",
                     "pipeline_override": {
                         "活动-运镖": {
-                            "next": []
+                            "next": [
+                                "活动-运镖-检查活跃度agent"
+                            ]
                         }
                     }
                 }
