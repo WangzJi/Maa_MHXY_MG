@@ -60,12 +60,28 @@
             126,
             97
         ],
-        "pre_delay": 500,
+        "pre_delay": 1000,
         "action": "Click",
         "post_delay": 1500,
         "next": [
-            "已经在-祈福庭院"
+            "已经在-祈福庭院",
+            "[JumpBack]再次点击祈福庭院"
         ]
+    },
+    "再次点击祈福庭院": {
+        "recognition": "TemplateMatch",
+        "template": [
+            "qifu/qifutingyuan.png"
+        ],
+        "roi": [
+            102,
+            533,
+            126,
+            97
+        ],
+        "pre_delay": 1000,
+        "action": "Click",
+        "post_delay": 1500
     },
     "已经在-祈福庭院": {
         "focus": {
