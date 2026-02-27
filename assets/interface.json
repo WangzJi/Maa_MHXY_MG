@@ -152,8 +152,7 @@
             "name": "科举乡试",
             "entry": "kejuxiangshi",
             "option": [
-                "是否使用Ai进行答题",
-                "Deepseek_apikey"
+                "是否使用Ai进行答题"
             ],
             "description": "1.默认不使用AI，全选A,2.科举乡试使用AI答题，请在高级中填写Key,暂时只支持deepseek。"
         },
@@ -456,7 +455,10 @@
                                 "[JumpBack]活动-科举乡试-开始答题agent"
                             ]
                         }
-                    }
+                    },
+                    "option": [
+                        "Deepseek_apikey"
+                    ]
                 }
             ]
         },
