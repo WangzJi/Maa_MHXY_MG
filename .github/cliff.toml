@@ -84,7 +84,10 @@ commit_parsers = [
     { body = ".*security", group = "<!-- 9 -->🔒 安全" },
     { message = "^revert", group = "<!-- 10 -->◀️ 撤销" },
 ]
-
+# 启用预发布标签识别
+include_pre_releases = true
+# 自定义版本排序规则（确保beta标签排在正式版前）
+tag_pattern = "^v?[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9.]+)?$"
 # 忽略这些提交
 ignore_tags = "rc"
 
