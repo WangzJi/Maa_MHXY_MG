@@ -177,41 +177,24 @@
         "post_delay": 500
     },
     "任务栏切换为任务": {
-        "recognition": "And",
-        "all_of": [
-            {
-                "recognition": "TemplateMatch",
-                "template": [
-                    "shimen/shimen_renwulan_zhankaizhong.png"
-                ],
-                "roi": [
-                    1038,
-                    110,
-                    57,
-                    58
-                ]
-            },
-            {
-                "recognition": "ColorMatch",
-                "upper": [
-                    177,
-                    175,
-                    145
-                ],
-                "lower": [
-                    28,
-                    31,
-                    22
-                ],
-                "roi": [
-                    1047,
-                    119,
-                    35,
-                    35
-                ],
-                "count": 950
-            }
+        "recognition": "ColorMatch",
+        "upper": [
+            177,
+            175,
+            145
         ],
+        "lower": [
+            28,
+            31,
+            22
+        ],
+        "roi": [
+            1047,
+            119,
+            35,
+            35
+        ],
+        "count": 950,
         "pre_delay": 1500,
         "action": "Click",
         "target": [
