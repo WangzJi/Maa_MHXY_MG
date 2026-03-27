@@ -24,6 +24,9 @@ permissions:
 env:
   MAA_FRAMEWORK_VERSION: "v5.8.1"
   MFAA_VERSION: "v2.10.9"
+  MXU_VERSION: "v1.21.1"
+
+
 jobs:
   meta:
     runs-on: ubuntu-latest
@@ -112,6 +115,23 @@ jobs:
           rm -f "${ARCHIVE_FILE_PATH}"
           echo "Archive cleanup command executed for MFAAvalonia on Windows."
 
+      - name: Download MXU
+        id: download_mxu
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: MistEO/MXU
+          fileName: "MXU-win-${{ matrix.arch }}*"
+          tag: ${{ env.MXU_VERSION }}
+          out-file-path: "MXU"
+          extract: true
+
+      - name: Clean up MXU archive on Windows
+        shell: bash
+        run: |
+          ARCHIVE_FILE_PATH="${{ fromJson(steps.download_mxu.outputs.downloaded_files)[0] }}"
+          rm -f "${ARCHIVE_FILE_PATH}"
+          echo "Archive cleanup command executed for MXU on Windows."
+
       - name: Setup Embed Python on Windows
         shell: bash
         run: |
@@ -174,6 +194,25 @@ jobs:
           ARCHIVE_FILE_PATH="${{ fromJson(steps.download_mfa.outputs.downloaded_files)[0] }}"
           rm -f "${ARCHIVE_FILE_PATH}"
           echo "Archive cleanup command executed for MFAAvalonia on Linux."
+      
+      - name: Download MXU for Linux
+        if: matrix.arch == 'x86_64'
+        id: download_mxu
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: MistEO/MXU
+          fileName: "MXU-linux-${{ matrix.arch }}*"
+          tag: ${{ env.MXU_VERSION }}
+          out-file-path: "MXU"
+          extract: true
+
+      - name: Clean up MXU archive on Linux
+        if: matrix.arch == 'x86_64'
+        shell: bash
+        run: |
+          ARCHIVE_FILE_PATH="${{ fromJson(steps.download_mxu.outputs.downloaded_files)[0] }}"
+          rm -f "${ARCHIVE_FILE_PATH}"
+          echo "Archive cleanup command executed for MXU on Linux."
 
       - name: Install on Linux
         shell: bash
@@ -234,6 +273,23 @@ jobs:
           rm -f "${ARCHIVE_FILE_PATH}"
           echo "Archive cleanup command executed for MFAAvalonia on macOS."
 
+      - name: Download MXU for macOS
+        id: download_mxu
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: MistEO/MXU
+          fileName: "MXU-macos-${{ matrix.arch }}*"
+          tag: ${{ env.MXU_VERSION }}
+          out-file-path: "MXU"
+          extract: true
+
+      - name: Clean up MXU archive on macOS
+        shell: bash
+        run: |
+          ARCHIVE_FILE_PATH="${{ fromJson(steps.download_mxu.outputs.downloaded_files)[0] }}"
+          rm -f "${ARCHIVE_FILE_PATH}"
+          echo "Archive cleanup command executed for MXU on macOS."
+          
       - name: Setup Embed Python on macOS
         shell: bash
         run: |
