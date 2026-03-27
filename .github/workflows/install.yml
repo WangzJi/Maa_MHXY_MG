@@ -152,6 +152,11 @@ jobs:
         with:
           name: Maa_MHXY_MG-win-${{ matrix.arch }}
           path: "install"
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Maa_MHXY_MG-win-${{ matrix.arch }}
+          path: "install-mxu"
 
   linux:
     needs: meta
@@ -232,6 +237,11 @@ jobs:
         with:
           name: Maa_MHXY_MG-linux-${{ matrix.arch }}
           path: "install"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Maa_MHXY_MG-linux-${{ matrix.arch }}
+          path: "install-mxu"
 
   macos:
     needs: meta
@@ -321,6 +331,11 @@ jobs:
         with:
           name: Maa_MHXY_MG-macos-${{ matrix.arch }}
           path: "install"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Maa_MHXY_MG-macos-${{ matrix.arch }}
+          path: "install-mxu"
 
   changelog:
     name: Generate changelog
