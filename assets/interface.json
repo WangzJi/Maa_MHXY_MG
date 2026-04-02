@@ -212,17 +212,17 @@
         {
             "name": "迷魂塔",
             "entry": "mihunta",
-            "description": "需要用户手动组队后，在开始运行任务"
+            "description": "需要用户手动组队后，在开始运行任务,兼容手动领取任务后直接运行"
         },
         {
             "name": "门派闯关",
             "entry": "menpaichuangguan",
-            "description": "需要用户手动组队后，在开始运行任务"
+            "description": "需要用户手动组队后，在开始运行任务,兼容手动领取任务后直接运行"
         },
         {
             "name": "召唤灵海底",
             "entry": "haidi",
-            "description": "需要用户手动组队后，在开始运行任务"
+            "description": "需要用户手动组队后，在开始运行任务,兼容手动领取任务后直接运行"
         },
         {
             "name": "九黎演武",

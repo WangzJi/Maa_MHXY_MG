@@ -19,6 +19,7 @@
         ],
         "post_delay": 1000,
         "next": [
+            "进入迷魂塔成功",
             "识别-长安城-迷魂塔",
             "[JumpBack]打开大地图_69副本"
         ]
@@ -198,46 +199,42 @@
         "action": "Click",
         "post_delay": 2000,
         "next": [
-            "进入迷魂塔-图片",
-            "进入迷魂塔-ocr"
+            "进入迷魂塔成功"
         ]
     },
-    "进入迷魂塔-图片": {
-        "recognition": "TemplateMatch",
-        "template": [
-            "wanjian/mihunta_zhujiemian.png"
-        ],
-        "roi": [
-            4,
-            5,
-            75,
-            78
+    "进入迷魂塔成功": {
+        "recognition": "Or",
+        "any_of": [
+            {
+                "recognition": "TemplateMatch",
+                "template": [
+                    "wanjian/mihunta_zhujiemian.png"
+                ],
+                "roi": [
+                    4,
+                    5,
+                    75,
+                    78
+                ]
+            },
+            {
+                "recognition": "OCR",
+                "expected": [
+                    "迷魂塔1层"
+                ],
+                "roi": [
+                    104,
+                    22,
+                    122,
+                    31
+                ]
+            }
         ],
         "next": [
-            "迷魂塔完成-ocr",
-            "迷魂塔完成-图片",
+            "迷魂塔完成",
             "[JumpBack]任务栏切换为任务",
             "[JumpBack]点击勇闯迷魂塔",
             "[JumpBack]战斗中-等待5秒"
-        ]
-    },
-    "进入迷魂塔-ocr": {
-        "recognition": "OCR",
-        "expected": [
-            "迷魂塔1层"
-        ],
-        "roi": [
-            104,
-            22,
-            122,
-            31
-        ],
-        "next": [
-            "迷魂塔完成-ocr",
-            "迷魂塔完成-图片",
-            "[JumpBack]任务栏切换为任务",
-            "[JumpBack]点击勇闯迷魂塔",
-            "[JumpBack]战斗中-等待100秒"
         ]
     },
     "点击勇闯迷魂塔": {
@@ -268,33 +265,36 @@
         ],
         "action": "Click"
     },
-    "迷魂塔完成-ocr": {
-        "recognition": "OCR",
-        "expected": [
-            "迷魂塔10层"
+    "迷魂塔完成": {
+        "recognition": "Or",
+        "any_of": [
+            {
+                "recognition": "OCR",
+                "expected": [
+                    "迷魂塔10层"
+                ],
+                "roi": [
+                    106,
+                    22,
+                    110,
+                    33
+                ]
+            },
+            {
+                "recognition": "TemplateMatch",
+                "template": [
+                    "wanjian/mihunta_wanchengjiemian.png"
+                ],
+                "roi": [
+                    3,
+                    5,
+                    74,
+                    75
+                ],
+                "threshold": 0.9
+            }
         ],
-        "roi": [
-            106,
-            22,
-            110,
-            33
-        ],
-        "next": [
-            "点击-离开迷魂塔"
-        ]
-    },
-    "迷魂塔完成-图片": {
-        "recognition": "TemplateMatch",
-        "template": [
-            "wanjian/mihunta_wanchengjiemian.png"
-        ],
-        "roi": [
-            3,
-            5,
-            74,
-            75
-        ],
-        "threshold": 0.9,
+        "pre_delay": 500,
         "next": [
             "点击-离开迷魂塔"
         ]
