@@ -313,5 +313,27 @@
         "focus": {
             "Node.Recognition.Succeeded": "测试focus1{best_result}"
         }
+    },
+    "测试ocr文字替换功能2": {
+        "recognition": "OCR",
+        "expected": [
+            "抚谁吐焰"
+        ],
+        "roi": [
+            365,
+            609,
+            120,
+            58
+        ],
+        "replace": [
+            [
+                "履",
+                "抚"
+            ],
+            [
+                "水",
+                "谁"
+            ]
+        ]
     }
 }
