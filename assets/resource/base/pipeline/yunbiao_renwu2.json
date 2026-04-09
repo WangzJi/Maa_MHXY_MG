@@ -139,6 +139,24 @@
             "[JumpBack]点击押送普通镖银(三次)",
             "[JumpBack]运镖中",
             "[JumpBack]战斗中-等待20秒"
+        ],
+        "on_error": [
+            "运镖完成onerror"
+        ]
+    },
+    "运镖完成onerror": {
+        "recognition": "TemplateMatch",
+        "template": [
+            "zonghe/jiahao.png",
+            "zonghe/chenghao.png",
+            "zonghe/baoguo.png",
+            "zonghe/baoguo_man.png"
+        ],
+        "roi": [
+            1197,
+            540,
+            78,
+            157
         ]
     },
     "运镖中": {
