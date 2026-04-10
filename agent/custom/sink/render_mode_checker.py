@@ -1,14 +1,13 @@
 """
 MuMu 模拟器渲染模式检查器
 
-在任务开始时检查 MuMu 模拟器的显卡渲染模式是否为 DirectX，
-如果不是则停止任务并输出警告。
+在任务开始时自动检测 MuMu 模拟器的安装路径和配置文件，
+检查显卡渲染模式是否为 DirectX，如果不是则停止任务并输出警告。
 """
 
-import configparser
-import subprocess
+import json
 from pathlib import Path
-from typing import Optional, Tuple
+import winreg
 
 from maa.agent.agent_server import AgentServer
 from maa.tasker import Tasker, TaskerEventSink
@@ -16,182 +15,124 @@ from maa.event_sink import NotificationType
 
 from utils.logger import logger
 
-# MuMu 模拟器配置文件可能的路径模板（按优先级排序）
-MUMU_CONFIG_PATHS = [
-    # MuMu 12 常见路径
-    Path.home() / "Documents" / "MuMu12" / "emulator_name" / "config.ini",
-    Path.home() / "MuMu12" / "emulator_name" / "config.ini",
-    # MuMu 6 常见路径
-    Path.home() / "Documents" / "MuMu" / "emulator_name" / "config.ini",
-    Path.home() / "MuMu" / "emulator_name" / "config.ini",
-]
 
-# 配置文件中表示渲染模式的键（不同版本可能不同）
-RENDER_MODE_KEYS = ["render_mode", "graphics_render_mode", "graphics_mode"]
-# 表示 DirectX 模式的值（不区分大小写）
-DIRECTX_VALUES = ["dx", "directx", "dx11"]
-
-
-def find_mumu_config(instance_name: str) -> Optional[Path]:
+def get_adb_info_from_controller(controller) -> tuple[str | None, str | None]:
     """
-    根据模拟器实例名称查找 MuMu 配置文件路径。
-    """
-    for template in MUMU_CONFIG_PATHS:
-        path = Path(str(template).replace("emulator_name", instance_name))
-        if path.exists():
-            return path
-    return None
-
-
-def get_mumu_instance_name_from_adb(adb_serial: str) -> Optional[str]:
-    """
-    根据 ADB 设备序列号（如 127.0.0.1:7555）推断 MuMu 模拟器实例名称。
-    MuMu 实例端口与实例名称的对应关系：
-    - 实例0: 7555 -> "MuMu" (默认)
-    - 实例1: 7557 -> "MuMu1"
-    - 实例2: 7559 -> "MuMu2"
-    - 依此类推
-    如果端口无法识别，返回 None。
+    从 MAA 控制器获取 ADB 路径和设备地址。
     """
     try:
-        if ":" in adb_serial:
-            port = int(adb_serial.split(":")[-1])
-        else:
-            # 可能是 emulator-5554 格式
-            return None
-        # MuMu 默认实例端口 7555，后续实例 +2
-        if port >= 7555 and (port - 7555) % 2 == 0:
-            index = (port - 7555) // 2
-            if index == 0:
-                return "MuMu"
-            else:
-                return f"MuMu{index}"
-    except (ValueError, IndexError):
+        adb_path = getattr(controller, 'adb_path', None)
+        address = getattr(controller, 'address', None)
+        if adb_path and address:
+            return adb_path, address
+    except Exception:
         pass
-    return None
 
-
-def check_render_mode_via_config(config_path: Path) -> Optional[bool]:
-    """
-    从配置文件中读取渲染模式，返回 True 表示 DirectX，False 表示其他，None 表示读取失败。
-    """
     try:
-        config = configparser.ConfigParser()
-        config.read(config_path, encoding="utf-8")
-        # 遍历可能的段和键
-        for section in config.sections():
-            for key in RENDER_MODE_KEYS:
-                if key in config[section]:
-                    value = config[section][key].strip().lower()
-                    logger.debug(f"找到渲染模式配置: {section}.{key} = {value}")
-                    return value in DIRECTX_VALUES
-    except Exception as e:
-        logger.error(f"读取配置文件失败 {config_path}: {e}")
+        from maa.toolkit import Toolkit
+        devices = Toolkit.find_adb_devices()
+        if devices:
+            device = devices[0]
+            return device.adb_path, device.address
+    except Exception:
+        pass
+
+    return None, None
+
+
+def get_mumu_install_path_from_registry() -> Path | None:
+    """
+    从 Windows 注册表获取 MuMu 模拟器的安装路径。
+    """
+    registry_paths = [
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Netease\MuMuPlayer"),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Netease\MuMuPlayer"),
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Netease\MuMuPlayer"),
+    ]
+    for hive, subkey in registry_paths:
+        try:
+            key = winreg.OpenKey(hive, subkey)
+            install_path, _ = winreg.QueryValueEx(key, "InstallPath")
+            winreg.CloseKey(key)
+            if install_path and Path(install_path).exists():
+                return Path(install_path)
+        except (FileNotFoundError, OSError):
+            continue
     return None
 
 
-def check_render_mode_via_mumumanager(instance_name: str) -> Optional[bool]:
+def find_mumu_install_path(adb_path: str) -> Path | None:
     """
-    尝试使用 MuMuManager 命令行工具获取渲染模式。
-    返回 True 表示 DirectX，False 表示其他，None 表示失败。
-    MuMuManager 路径通常在 MuMu 安装目录的 shell 文件夹下。
+    根据 ADB 路径查找 MuMu 模拟器的安装根目录。
     """
-    # 常见 MuMu 安装路径
-    possible_paths = [
-        Path("C:/Program Files/Netease/MuMu12/shell/MuMuManager.exe"),
-        Path("C:/Program Files (x86)/Netease/MuMu/shell/MuMuManager.exe"),
-        Path.home() / "AppData/Local/Programs/MuMu12/shell/MuMuManager.exe",
-    ]
-    manager_path = None
-    for p in possible_paths:
-        if p.exists():
-            manager_path = p
-            break
-    if not manager_path:
-        logger.debug("未找到 MuMuManager.exe")
+    adb_path = Path(adb_path)
+    
+    # MuMu 12: adb.exe 在 shell 目录下
+    if adb_path.parent.name.lower() == "shell":
+        return adb_path.parent.parent
+    
+    # MuMu 5.0: 向上查找包含特定名称的父目录
+    for parent in adb_path.parents:
+        if parent.name.lower() in ("mumuplayer", "mumu", "nemu"):
+            return parent
+    
+    return None
+
+
+def find_config_file(install_path: Path) -> Path | None:
+    """
+    在 MuMu 安装目录中查找 customer_config.json 文件。
+    """
+    vms_dir = install_path / "vms"
+    if not vms_dir.exists():
+        logger.debug(f"vms 目录不存在: {vms_dir}")
         return None
 
-    try:
-        # 执行命令获取实例信息
-        cmd = [str(manager_path), "info", "-v", instance_name]
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=5, encoding="utf-8"
-        )
-        if result.returncode != 0:
-            logger.debug(f"MuMuManager 执行失败: {result.stderr}")
-            return None
-        output = result.stdout
-        # 解析输出中的渲染模式字段（格式示例: "RenderMode: dx" 或 "graphics_render_mode: dx"）
-        for line in output.splitlines():
-            line_lower = line.strip().lower()
-            for key in RENDER_MODE_KEYS:
-                if key in line_lower and ":" in line_lower:
-                    parts = line_lower.split(":", 1)
-                    if len(parts) == 2:
-                        value = parts[1].strip()
-                        if value in DIRECTX_VALUES:
-                            logger.debug(f"MuMuManager 检测到 DirectX 模式")
-                            return True
-                        else:
-                            logger.debug(f"MuMuManager 检测到非 DirectX 模式: {value}")
-                            return False
-    except Exception as e:
-        logger.error(f"调用 MuMuManager 异常: {e}")
+    # 遍历 vms 目录下的所有实例文件夹，查找配置文件
+    for instance_dir in vms_dir.iterdir():
+        if not instance_dir.is_dir():
+            continue
+        
+        config_file = instance_dir / "configs" / "customer_config.json"
+        if config_file.exists():
+            logger.debug(f"找到配置文件: {config_file}")
+            return config_file
+
     return None
 
 
-def is_render_mode_directx(controller) -> Tuple[bool, str]:
+def get_render_mode(config_path: Path) -> str | None:
     """
-    检查当前 MuMu 模拟器的渲染模式是否为 DirectX。
-    返回 (is_directx, message)
+    从 MuMu 配置文件中读取当前渲染模式。
     """
-    # 获取 ADB 序列号以推断实例名称
     try:
-        adb_serial = controller.adb_serial
-        if not adb_serial:
-            return False, "无法获取 ADB 序列号"
-    except AttributeError:
-        return False, "控制器不支持 adb_serial 属性"
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+    except FileNotFoundError:
+        logger.error(f"MuMu 配置文件不存在: {config_path}")
+        return None
+    except json.JSONDecodeError as e:
+        logger.error(f"MuMu 配置文件解析失败: {e}")
+        return None
 
-    instance_name = get_mumu_instance_name_from_adb(adb_serial)
-    if not instance_name:
-        return False, f"无法从 ADB 序列号 {adb_serial} 推断 MuMu 实例名称"
+    render = config.get("setting", {}).get("render", {})
+    mode_choose = render.get("mode", {}).get("choose")
+    if mode_choose != "render.mode.stable":
+        logger.debug(f"渲染模式选择不是 stable，实际选择为: {mode_choose}")
+        return None
 
-    logger.debug(f"推断的 MuMu 实例名称: {instance_name}")
-
-    # 方法1: 通过配置文件检查
-    config_path = find_mumu_config(instance_name)
-    if config_path:
-        logger.debug(f"找到配置文件: {config_path}")
-        is_dx = check_render_mode_via_config(config_path)
-        if is_dx is not None:
-            if is_dx:
-                return True, ""
-            else:
-                return False, f"配置文件显示非 DirectX 模式（实例: {instance_name}）"
-    else:
-        logger.debug(f"未找到实例 {instance_name} 的配置文件")
-
-    # 方法2: 尝试使用 MuMuManager
-    is_dx = check_render_mode_via_mumumanager(instance_name)
-    if is_dx is not None:
-        if is_dx:
-            return True, ""
-        else:
-            return False, f"MuMuManager 报告非 DirectX 模式（实例: {instance_name}）"
-
-    # 两种方法都失败，无法确定
-    return False, f"无法确定 MuMu 模拟器 {instance_name} 的渲染模式，请手动确认是否为 DirectX"
+    return render.get("mode", {}).get("stable")
 
 
 @AgentServer.tasker_sink()
-class RenderModeChecker(TaskerEventSink):
+class MuMuRenderChecker(TaskerEventSink):
     """
     MuMu 模拟器渲染模式检查器
-    在任务开始时检查是否为 DirectX 模式，否则停止任务
+    在任务开始时自动检测配置文件路径并检查渲染模式是否为 DirectX
     """
 
     def __init__(self):
+        super().__init__()
         self._checked = False
 
     def on_tasker_task(
@@ -213,21 +154,60 @@ class RenderModeChecker(TaskerEventSink):
             f"任务开始前检查渲染模式 - task_id: {detail.task_id}, entry: {detail.entry}"
         )
 
-        # 获取控制器
         controller = tasker.controller
         if controller is None:
-            logger.error("无法获取控制器")
+            logger.error("无法获取控制器，跳过渲染模式检查")
             return
 
-        # 执行检查
-        is_dx, msg = is_render_mode_directx(controller)
-        if not is_dx:
-            error_msg = (
-                f"🚨 {msg}。Maa_MHXY_MG 要求 MuMu 模拟器使用 DirectX 渲染模式，"
-                f"请在模拟器设置中切换为 DirectX 后重启模拟器。"
+        # 1. 尝试从控制器获取 ADB 路径并推导安装目录
+        adb_path, address = get_adb_info_from_controller(controller)
+        install_path = None
+        
+        if adb_path:
+            logger.debug(f"获取到 ADB 路径: {adb_path}")
+            install_path = find_mumu_install_path(adb_path)
+        
+        # 2. 如果通过 ADB 路径找不到，尝试注册表
+        if install_path is None:
+            logger.debug("通过 ADB 路径无法定位安装目录，尝试从注册表获取")
+            install_path = get_mumu_install_path_from_registry()
+        
+        if install_path is None:
+            logger.error(
+                "🚨 无法定位 MuMu 模拟器安装路径，请确保 MuMu 模拟器已正确安装。"
             )
-            logger.error(error_msg)
-            # 停止任务
+            tasker.post_stop()
+            return
+
+        logger.debug(f"MuMu 安装路径: {install_path}")
+
+        # 3. 查找配置文件
+        config_path = find_config_file(install_path)
+        if config_path is None:
+            logger.error(
+                f"🚨 在安装目录中未找到 MuMu 配置文件。\n"
+                f"安装路径: {install_path}\n"
+                f"请确保 MuMu 模拟器已正确安装并至少运行过一次。"
+            )
+            tasker.post_stop()
+            return
+
+        # 4. 检查渲染模式
+        render_mode = get_render_mode(config_path)
+        if render_mode is None:
+            logger.error(
+                "🚨 无法获取 MuMu 模拟器渲染模式，请检查配置文件是否完整。"
+            )
+            tasker.post_stop()
+            return
+
+        if render_mode != "DirectX":
+            logger.error(
+                f"🚨 MuMu 模拟器渲染模式不是 DirectX！任务已停止。\n"
+                f"当前模式: {render_mode}\n"
+                f"配置文件: {config_path}\n"
+                f"请打开 MuMu 设置中心 -> 显示 -> 渲染模式，选择“DirectX”并重启模拟器。"
+            )
             tasker.post_stop()
         else:
-            logger.info("渲染模式检查通过: DirectX")
+            logger.info(f"渲染模式检查通过: DirectX (配置文件: {config_path})")
