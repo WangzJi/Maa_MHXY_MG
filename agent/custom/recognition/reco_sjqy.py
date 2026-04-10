@@ -248,7 +248,7 @@ class sjqy_tiku_V3(CustomRecognition):
             data_to_send = [text,confidence,results_value,formatted]
             # logger.info(f"发送到金山文档的数据为:{data_to_send}")   
             if SendJinSan.send(data_to_send):
-                logger.info(f"本问题未与题库匹配:{text},已经登记在线文档")
+                logger.info(f"本问题未与题库匹配.题目：{text}，匹配度：{confidence}，已经登记在线文档")
             else:
                 logger.error(f"登记在线文档失败:{text}")
             time.sleep(2)
@@ -286,9 +286,9 @@ class sjqy_tiku_V3(CustomRecognition):
             time.sleep(2)
             click_job = context.tasker.controller.post_click(center_x, center_y)
             click_job.wait()  # 等待点击操作完成
-            image2 = context.tasker.controller.post_screencap().wait().get()
-            logger.info(image2)
-            logger.info(f"已在题库中找到答案")
+            # image2 = context.tasker.controller.post_screencap().wait().get()
+            # logger.info(image2)
+            logger.info(f"已在题库中找到答案。<br>题目：{text}。<br>答案：{results_value}。<br>匹配度：{confidence}。")
             time.sleep(2)
         else:#没找到答案，点击的一个
             time.sleep(2)
