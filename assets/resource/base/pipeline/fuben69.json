@@ -37,28 +37,54 @@
         ]
     },
     "大地图界面-按键打开失败_点击图标": {
-        "recognition": "ColorMatch",
-        "upper": [
-            135,
-            88,
-            50
+        "recognition": "Or",
+        "any_of": [
+            {
+                "recognition": "ColorMatch",
+                "upper": [
+                    135,
+                    88,
+                    50
+                ],
+                "lower": [
+                    130,
+                    85,
+                    48
+                ],
+                "roi": [
+                    1,
+                    2,
+                    80,
+                    82
+                ],
+                "count": 1000
+            },
+            {
+                "recognition": "TemplateMatch",
+                "template": [
+                    "zonghe/xiaoditu_taiyang.png",
+                    "zonghe/xiaoditu_yueliang.png"
+                ],
+                "roi": [
+                    58,
+                    1,
+                    75,
+                    79
+                ],
+                "threshold": 0.9
+            }
         ],
-        "lower": [
-            130,
-            85,
-            48
-        ],
-        "roi": [
-            1,
-            2,
-            80,
-            82
-        ],
-        "count": 1000,
         "pre_delay": 500,
         "action": "Click",
+        "target": [
+            8,
+            7,
+            70,
+            74
+        ],
         "post_delay": 1000
     },
+    "55": {},
     "打开大地图成功_传送长安城_69副本": {
         "recognition": "TemplateMatch",
         "template": [
