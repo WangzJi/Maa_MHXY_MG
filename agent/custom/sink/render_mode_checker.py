@@ -230,4 +230,4 @@ class RenderModeChecker(TaskerEventSink):
             # 停止任务
             tasker.post_stop()
         else:
-            logger.debug("渲染模式检查通过: DirectX")
+            logger.info("渲染模式检查通过: DirectX")

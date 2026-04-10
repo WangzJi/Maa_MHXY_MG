@@ -114,4 +114,4 @@ class AspectRatioChecker(TaskerEventSink):
             # 停止任务
             tasker.post_stop()
         else:
-            logger.debug(f"分辨率检查通过: {width}x{height} (16:9 横屏)")
+            logger.info(f"分辨率检查通过: {width}x{height} (16:9 横屏)")
