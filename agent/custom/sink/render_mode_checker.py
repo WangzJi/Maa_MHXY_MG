@@ -7,7 +7,6 @@ MuMu 模拟器渲染模式检查器
 
 import json
 from pathlib import Path
-import winreg
 
 from maa.agent.agent_server import AgentServer
 from maa.tasker import Tasker, TaskerEventSink
@@ -49,27 +48,6 @@ def is_mumu_simulator(adb_path: str) -> bool:
     path_lower = adb_path.lower()
     keywords = ["mumu", "net ease", "netease"]
     return any(kw in path_lower for kw in keywords)
-
-
-def get_mumu_install_path_from_registry() -> Path | None:
-    """
-    从 Windows 注册表获取 MuMu 模拟器的安装路径。
-    """
-    registry_paths = [
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Netease\MuMuPlayer"),
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Netease\MuMuPlayer"),
-        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Netease\MuMuPlayer"),
-    ]
-    for hive, subkey in registry_paths:
-        try:
-            key = winreg.OpenKey(hive, subkey)
-            install_path, _ = winreg.QueryValueEx(key, "InstallPath")
-            winreg.CloseKey(key)
-            if install_path and Path(install_path).exists():
-                return Path(install_path)
-        except (FileNotFoundError, OSError):
-            continue
-    return None
 
 
 def find_mumu_install_path(adb_path: str) -> Path | None:
@@ -228,25 +206,19 @@ class MuMuRenderChecker(TaskerEventSink):
 
         adb_path, address = get_adb_info_from_controller(controller)
 
-        # 没有 ADB 路径则无法判断模拟器类型，直接跳过
         if not adb_path:
             logger.warning("无法获取 ADB 路径，跳过渲染模式检查")
             return
 
         logger.debug(f"获取到 ADB 路径: {adb_path}")
 
-        # 仅当识别为 MuMu 模拟器时才进行检查
         if not is_mumu_simulator(adb_path):
             logger.info("非 MuMu 模拟器，跳过渲染模式检查")
             return
 
         logger.debug("检测到 MuMu 模拟器，开始检查渲染模式")
 
-        # 查找 MuMu 安装目录
         install_path = find_mumu_install_path(adb_path)
-        if install_path is None:
-            logger.debug("通过 ADB 路径无法定位安装目录，尝试从注册表获取")
-            install_path = get_mumu_install_path_from_registry()
 
         if install_path is None:
             logger.error(
