@@ -1,9 +1,8 @@
 """
 MuMu 模拟器渲染模式检查器
 
-在任务开始时自动检测 MuMu 模拟器的本次连接adb的安装路径和配置文件，
-检查显卡渲染模式是否为 DirectX，如果不是则停止任务并输出警告。
-对于雷电模拟器，自动跳过检查。
+仅在识别到 MuMu 模拟器时检查显卡渲染模式是否为 DirectX，
+如果不是则停止任务并输出警告。对于其他模拟器（如雷电）自动跳过。
 """
 
 import json
@@ -41,12 +40,14 @@ def get_adb_info_from_controller(controller) -> tuple[str | None, str | None]:
     return None, None
 
 
-def is_ldplayer(adb_path: str) -> bool:
+def is_mumu_simulator(adb_path: str) -> bool:
     """
-    根据 ADB 路径判断是否为雷电模拟器。
+    根据 ADB 路径判断是否为 MuMu 模拟器。
     """
+    if not adb_path:
+        return False
     path_lower = adb_path.lower()
-    keywords = ["ldplayer", "dnplayer", "雷电"]
+    keywords = ["mumu", "net ease", "netease"]
     return any(kw in path_lower for kw in keywords)
 
 
@@ -183,7 +184,6 @@ def get_render_mode(config_path: Path) -> str | None:
         return None
 
     # 根据 choose 字段提取对应的后端值
-    # 例如 "render.mode.stable" -> "stable"
     backend_key = mode_choose.split(".")[-1]
     backend_value = render.get("mode", {}).get(backend_key)
     if backend_value:
@@ -227,18 +227,23 @@ class MuMuRenderChecker(TaskerEventSink):
             return
 
         adb_path, address = get_adb_info_from_controller(controller)
-        
-        if adb_path:
-            logger.debug(f"获取到 ADB 路径: {adb_path}")
-            # 检查是否为雷电模拟器，若是则直接跳过
-            if is_ldplayer(adb_path):
-                logger.info("检测到雷电模拟器，跳过渲染模式检查")
-                return
 
-        install_path = None
-        if adb_path:
-            install_path = find_mumu_install_path(adb_path)
+        # 没有 ADB 路径则无法判断模拟器类型，直接跳过
+        if not adb_path:
+            logger.warning("无法获取 ADB 路径，跳过渲染模式检查")
+            return
 
+        logger.debug(f"获取到 ADB 路径: {adb_path}")
+
+        # 仅当识别为 MuMu 模拟器时才进行检查
+        if not is_mumu_simulator(adb_path):
+            logger.info("非 MuMu 模拟器，跳过渲染模式检查")
+            return
+
+        logger.debug("检测到 MuMu 模拟器，开始检查渲染模式")
+
+        # 查找 MuMu 安装目录
+        install_path = find_mumu_install_path(adb_path)
         if install_path is None:
             logger.debug("通过 ADB 路径无法定位安装目录，尝试从注册表获取")
             install_path = get_mumu_install_path_from_registry()
