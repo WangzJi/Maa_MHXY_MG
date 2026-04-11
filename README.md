@@ -1,4 +1,7 @@
-
+<!-- markdownlint-disable MD033 MD041 -->
+<p align="center">
+  <img alt="LOGO" src="./docs/img/logo.png" width="256"  />
+</p>
 
 <div align="center">
 
@@ -43,6 +46,28 @@
 
 本项目仅供学习参考
 
+<!-- ## ☕️ 支持项目 / Support the Project
+
+如果本项目对你有帮助，欢迎通过以下方式支持作者，让项目持续维护与更新。
+
+If this project is helpful to you, please consider supporting the author.
+
+### 支付宝 / 微信支付
+
+<img src="./docs/img/code/1775884404813.jpg" width="300" alt="Alipay" align="center">
+<img src="./docs/img/code/mm_facetoface_collect_qrcode_1775884589883.png" width="300" alt="WeChat Pay" align="center">
+
+### 💌 感谢支持
+你的每一份鼓励，都是项目前进的动力！
+Your support is the driving force behind the project. -->
+
+## 赞助
+
+<!-- markdownlint-disable MD045 -->
+<a href="https://afdian.com/a/gitlihang">
+  <img width="200" src="https://pic1.afdiancdn.com/static/img/welcome/button-sponsorme.png">
+</a>
 
 ## 交流群
  - 交流反馈 QQ群：953819042
+
