@@ -18,12 +18,13 @@ from utils.logger import logger
 def get_adb_info_from_controller(controller) -> tuple[str | None, str | None]:
     """
     从 MAA 控制器获取 ADB 路径和设备地址。
+    返回的 adb_path 可能是 str 或 Path 对象，统一转为 str。
     """
     try:
         adb_path = getattr(controller, 'adb_path', None)
         address = getattr(controller, 'address', None)
         if adb_path and address:
-            return adb_path, address
+            return str(adb_path), address
     except Exception:
         pass
 
@@ -32,7 +33,7 @@ def get_adb_info_from_controller(controller) -> tuple[str | None, str | None]:
         devices = Toolkit.find_adb_devices()
         if devices:
             device = devices[0]
-            return device.adb_path, device.address
+            return str(device.adb_path), device.address
     except Exception:
         pass
 
@@ -45,7 +46,8 @@ def is_mumu_simulator(adb_path: str) -> bool:
     """
     if not adb_path:
         return False
-    path_lower = adb_path.lower()
+    # 确保 adb_path 为字符串
+    path_lower = str(adb_path).lower()
     keywords = ["mumu", "net ease", "netease"]
     return any(kw in path_lower for kw in keywords)
 
@@ -57,24 +59,39 @@ def find_mumu_install_path(adb_path: str) -> Path | None:
     若无则回退到包含主程序文件的目录。
     """
     try:
+        # 确保转为 Path 对象并解析为绝对路径
         adb_path = Path(adb_path).resolve()
-    except Exception:
+    except Exception as e:
+        logger.debug(f"解析 ADB 路径失败: {adb_path}, 错误: {e}")
         return None
 
     current = adb_path.parent
     fallback = None
 
-    for _ in range(6):
-        if (current / "vms").is_dir():
-            return current
-        if fallback is None:
-            if (current / "MuMuPlayer.exe").is_file() or (current / "MuMuManager.exe").is_file():
-                fallback = current
-        if (current / "emulator").is_dir():
-            return current
+    for i in range(6):
+        try:
+            if (current / "vms").is_dir():
+                logger.debug(f"在第 {i+1} 层找到 vms 目录，安装根目录: {current}")
+                return current
+            if fallback is None:
+                if (current / "MuMuPlayer.exe").is_file() or (current / "MuMuManager.exe").is_file():
+                    fallback = current
+                    logger.debug(f"发现 MuMu 主程序文件，备用安装目录: {current}")
+            if (current / "emulator").is_dir():
+                logger.debug(f"发现 emulator 目录（MuMu 5.0），安装根目录: {current}")
+                return current
+        except PermissionError:
+            logger.debug(f"访问目录 {current} 权限不足，跳过")
+        except Exception as e:
+            logger.debug(f"检查目录 {current} 时出错: {e}")
+
         current = current.parent
 
-    return fallback
+    if fallback:
+        logger.debug(f"未找到 vms 目录，使用备用安装目录: {fallback}")
+        return fallback
+    logger.debug("未找到任何 MuMu 特征目录或文件")
+    return None
 
 
 def extract_port_from_address(address: str) -> int | None:
@@ -102,7 +119,6 @@ def find_config_file(install_path: Path, address: str | None = None) -> Path | N
     port = extract_port_from_address(address) if address else None
     target_index = None
     if port is not None:
-        # MuMu 12 多开端口计算：16384 + index * 32
         target_index = (port - 16384) // 32
         logger.debug(f"根据端口 {port} 计算得到目标实例索引: {target_index}")
 
@@ -137,6 +153,7 @@ def find_config_file(install_path: Path, address: str | None = None) -> Path | N
             logger.debug(f"找到配置文件: {first_valid}")
         return first_valid
 
+    logger.debug("未找到任何 customer_config.json 文件")
     return None
 
 
@@ -161,7 +178,6 @@ def get_render_mode(config_path: Path) -> str | None:
         logger.debug("未找到渲染模式选择字段")
         return None
 
-    # 根据 choose 字段提取对应的后端值
     backend_key = mode_choose.split(".")[-1]
     backend_value = render.get("mode", {}).get(backend_key)
     if backend_value:
@@ -183,6 +199,18 @@ class MuMuRenderChecker(TaskerEventSink):
         self._checked = False
 
     def on_tasker_task(
+        self,
+        tasker: Tasker,
+        noti_type: NotificationType,
+        detail: TaskerEventSink.TaskerTaskDetail,
+    ):
+        try:
+            self._do_check(tasker, noti_type, detail)
+        except Exception as e:
+            logger.exception(f"渲染模式检查器发生未预期异常: {e}")
+            tasker.post_stop()
+
+    def _do_check(
         self,
         tasker: Tasker,
         noti_type: NotificationType,
@@ -219,7 +247,6 @@ class MuMuRenderChecker(TaskerEventSink):
         logger.debug("检测到 MuMu 模拟器，开始检查渲染模式")
 
         install_path = find_mumu_install_path(adb_path)
-
         if install_path is None:
             logger.error(
                 "🚨 无法定位 MuMu 模拟器安装路径，请确保 MuMu 模拟器已正确安装。"
@@ -250,8 +277,7 @@ class MuMuRenderChecker(TaskerEventSink):
         if render_mode != "DirectX":
             logger.error(
                 f"🚨 MuMu 模拟器渲染模式不是 DirectX！任务已停止。"
-                f"当前ADB 地址: {address}的渲染模式: {render_mode}。"
-                # f"配置文件: {config_path}。"
+                f"当前 ADB 地址: {address} 的渲染模式: {render_mode}。"
                 f"请打开 MuMu 设置中心 -> 显示 -> 渲染模式，选择“DirectX”并重启模拟器。"
             )
             tasker.post_stop()
