@@ -3,6 +3,7 @@ MuMu 模拟器渲染模式检查器
 
 在任务开始时自动检测 MuMu 模拟器的本次连接adb的安装路径和配置文件，
 检查显卡渲染模式是否为 DirectX，如果不是则停止任务并输出警告。
+对于雷电模拟器，自动跳过检查。
 """
 
 import json
@@ -38,6 +39,15 @@ def get_adb_info_from_controller(controller) -> tuple[str | None, str | None]:
         pass
 
     return None, None
+
+
+def is_ldplayer(adb_path: str) -> bool:
+    """
+    根据 ADB 路径判断是否为雷电模拟器。
+    """
+    path_lower = adb_path.lower()
+    keywords = ["ldplayer", "dnplayer", "雷电"]
+    return any(kw in path_lower for kw in keywords)
 
 
 def get_mumu_install_path_from_registry() -> Path | None:
@@ -217,10 +227,16 @@ class MuMuRenderChecker(TaskerEventSink):
             return
 
         adb_path, address = get_adb_info_from_controller(controller)
-        install_path = None
-
+        
         if adb_path:
             logger.debug(f"获取到 ADB 路径: {adb_path}")
+            # 检查是否为雷电模拟器，若是则直接跳过
+            if is_ldplayer(adb_path):
+                logger.info("检测到雷电模拟器，跳过渲染模式检查")
+                return
+
+        install_path = None
+        if adb_path:
             install_path = find_mumu_install_path(adb_path)
 
         if install_path is None:
