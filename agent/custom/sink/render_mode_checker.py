@@ -282,4 +282,4 @@ class MuMuRenderChecker(TaskerEventSink):
             )
             tasker.post_stop()
         else:
-            logger.info(f"渲染模式检查通过: DirectX (ADB 地址: {address})")
+            logger.debug(f"渲染模式检查通过: DirectX (ADB 地址: {address})")
