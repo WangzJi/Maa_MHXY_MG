@@ -146,7 +146,8 @@ class AIAnswer(CustomRecognition):
             # logger.info(f"问题为：{question}")
             # logger.info(f"答案为：{answer}")
             # 获取传参节点apikey数据
-            UIpiKey: dict = context.get_node_data("AIapikey")['recognition']['param']['custom_recognition_param']['apikey']
+            # UIpiKey: dict = context.get_node_data("AIapikey")['recognition']['param']['custom_recognition_param']['apikey']
+            UIpiKey: dict = context.get_node_data("活动-科举乡试-开始答题agent-Deepseek")["attach"]["apikey"]
             # logger.info(f"用户输入的aikey: {data1}")
             # 向ai发送问题及答案并获得正确答案
             def get_ai_answer(question, answers):
@@ -208,6 +209,8 @@ class AIAnswer(CustomRecognition):
                 time.sleep(2)
                 click_job = new_context.tasker.controller.post_click(center_x, center_y)
                 click_job.wait()  # 等待点击操作完成
+                # 向用户ui界面输出日志info
+                logger.info(f"AI返回答案：{listAnswer}。识别题目：{question}，识别答案列表：{answer}")
                 time.sleep(2)
             if listAnswer =="A" or listAnswer == "a":
                 abox=[509,306,269,91]
@@ -442,6 +445,8 @@ class zhipu(CustomRecognition):
             time.sleep(2)
             click_job = new_context.tasker.controller.post_click(center_x, center_y)
             click_job.wait()  # 等待点击操作完成
+            # 向用户ui界面输出日志info
+            logger.info(f"AI返回答案：{listAnswer}。识别题目：{question}，识别答案列表：{answer}")
             time.sleep(2)
         if listAnswer =="A" or listAnswer == "a":
             abox=[509,306,269,91]

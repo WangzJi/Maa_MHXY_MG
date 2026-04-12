@@ -470,6 +470,7 @@
                         "活动-科举乡试-进入答题界面": {
                             "next": [
                                 "活动-科举乡试-结束-图片",
+                                "活动-科举乡试-结束ocr",
                                 "[JumpBack]活动-科举乡试-开始答题_普通"
                             ]
                         }
@@ -481,7 +482,8 @@
                         "活动-科举乡试-进入答题界面": {
                             "next": [
                                 "活动-科举乡试-结束-图片",
-                                "[JumpBack]活动-科举乡试-开始答题agent"
+                                "活动-科举乡试-结束ocr",
+                                "[JumpBack]活动-科举乡试-开始答题agent-Deepseek"
                             ]
                         }
                     },
@@ -495,6 +497,7 @@
                         "活动-科举乡试-进入答题界面": {
                             "next": [
                                 "活动-科举乡试-结束-图片",
+                                "活动-科举乡试-结束ocr",
                                 "[JumpBack]活动-科举乡试-开始答题agent-智谱"
                             ]
                         }
@@ -549,8 +552,8 @@
                 }
             ],
             "pipeline_override": {
-                "AIapikey": {
-                    "custom_recognition_param": {
+                "活动-科举乡试-开始答题agent-Deepseek": {
+                    "attach": {
                         "apikey": "{Deepseek_apikey}"
                     }
                 }
