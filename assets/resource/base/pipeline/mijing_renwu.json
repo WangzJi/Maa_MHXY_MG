@@ -154,10 +154,10 @@
             106
         ],
         "next": [
-            "click_haidimijing"
+            "海底秘境-点击海底秘境"
         ]
     },
-    "click_haidimijing": {
+    "海底秘境-点击海底秘境": {
         "recognition": "OCR",
         "expected": [
             "进入"
@@ -184,7 +184,8 @@
         ],
         "action": "Click",
         "next": [
-            "jixutiaozhan"
+            "jixutiaozhan",
+            "[JumpBack]清理主界面使用-关闭"
         ]
     },
     "jixutiaozhan": {
@@ -193,28 +194,26 @@
             "挑战"
         ],
         "roi": [
-            1000,
-            589,
-            73,
-            66
+            996,
+            481,
+            78,
+            179
         ],
         "post_delay": 200,
         "action": "Click",
         "next": [
-            "[JumpBack]mijing_zhandou_queren_issub",
+            "[JumpBack]秘境-点击进入战斗",
             "[JumpBack]mijing_zhandou",
             "mijing_tongguan",
-            "mijing_shibai",
-            "[JumpBack]issub_sleep_mijing"
+            "mijing_shibai"
         ]
     },
     "kk": {
         "next": [
-            "[JumpBack]mijing_zhandou_queren_issub",
+            "[JumpBack]秘境-点击进入战斗",
             "[JumpBack]mijing_zhandou",
             "mijing_tongguan",
-            "mijing_shibai",
-            "[JumpBack]issub_sleep_mijing"
+            "mijing_shibai"
         ]
     },
     "mijing_zhandou": {
@@ -230,24 +229,11 @@
         ],
         "action": "Click",
         "next": [
-            "mijing_zhandou_queren",
+            "秘境-点击进入战斗",
             "战斗中-等待5秒"
         ]
     },
-    "mijing_zhandou_queren": {
-        "recognition": "OCR",
-        "expected": [
-            "进入战斗"
-        ],
-        "roi": [
-            939,
-            366,
-            285,
-            63
-        ],
-        "action": "Click"
-    },
-    "mijing_zhandou_queren_issub": {
+    "秘境-点击进入战斗": {
         "recognition": "OCR",
         "expected": [
             "进入战斗"
@@ -302,8 +288,130 @@
         "action": "Click",
         "post_delay": 2000
     },
-    "issub_sleep_mijing": {
-        "pre_delay": 2000,
-        "post_wait_freezes": 5000
+    "秘境降妖-点击日月之井": {
+        "recognition": "OCR",
+        "expected": [
+            "进入"
+        ],
+        "roi": [
+            776,
+            605,
+            205,
+            59
+        ],
+        "action": "Click",
+        "next": [
+            "秘境降妖-日月之井-确认"
+        ]
+    },
+    "秘境降妖-日月之井-确认": {
+        "recognition": "TemplateMatch",
+        "template": "mijing/moshi_queding.png",
+        "roi": [
+            671,
+            405,
+            149,
+            59
+        ],
+        "action": "Click",
+        "post_delay": 500,
+        "next": [
+            "秘境降妖-日月之井-继续挑战",
+            "[JumpBack]清理主界面使用-关闭"
+        ]
+    },
+    "秘境降妖-日月之井-继续挑战": {
+        "recognition": "OCR",
+        "expected": [
+            "挑战"
+        ],
+        "roi": [
+            996,
+            481,
+            78,
+            179
+        ],
+        "action": "Click",
+        "post_delay": 1000,
+        "next": [
+            "[JumpBack]秘境-点击进入战斗",
+            "[JumpBack]日月之井-点击关卡",
+            "日月之井-通关",
+            "日月之井-失败",
+            "[JumpBack]战斗中-等待20秒"
+        ]
+    },
+    "kk2": {
+        "next": [
+            "[JumpBack]秘境-点击进入战斗",
+            "[JumpBack]日月之井-点击关卡",
+            "日月之井-通关",
+            "日月之井-失败",
+            "[JumpBack]战斗中-等待20秒"
+        ]
+    },
+    "日月之井-点击关卡": {
+        "recognition": "OCR",
+        "expected": [
+            "第\\d*关"
+        ],
+        "roi": [
+            1012,
+            169,
+            115,
+            74
+        ],
+        "action": "Click",
+        "post_delay": 1500,
+        "next": [
+            "秘境-点击进入战斗",
+            "战斗中-等待5秒"
+        ]
+    },
+    "日月之井-通关": {
+        "recognition": "OCR",
+        "expected": [
+            "通关"
+        ],
+        "roi": [
+            1012,
+            169,
+            115,
+            100
+        ],
+        "next": [
+            "秘境-点击离开"
+        ]
+    },
+    "日月之井-失败": {
+        "recognition": "TemplateMatch",
+        "template": [
+            "mijing/mijing_shibai.png",
+            "mijing/mijing_shibai2.png",
+            "mijing/mijing_riyue_shibai.png"
+        ],
+        "roi": [
+            304,
+            130,
+            654,
+            375
+        ],
+        "next": [
+            "秘境-点击离开",
+            "[JumpBack]清理主界面使用-关闭",
+            "[JumpBack]panduan_zhujiemian"
+        ]
+    },
+    "秘境-日月-点击离开": {
+        "recognition": "OCR",
+        "expected": [
+            "离开"
+        ],
+        "roi": [
+            1161,
+            353,
+            114,
+            196
+        ]
     }
 }

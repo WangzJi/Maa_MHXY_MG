@@ -122,7 +122,11 @@
         },
         {
             "name": "秘境降妖",
-            "entry": "mijing_renwu"
+            "entry": "mijing_renwu",
+            "option": [
+                "海底秘境模式"
+            ],
+            "description": "选择海底秘境vs日月之井"
         },
         {
             "name": "宝图任务",
@@ -673,6 +677,36 @@
                     "pipeline_override": {
                         "使用过期物品": {
                             "enabled": true
+                        }
+                    }
+                }
+            ]
+        },
+        "海底秘境模式": {
+            "type": "select",
+            "description": "请选择海底秘境模式",
+            "default_case": "海底秘境",
+            "cases": [
+                {
+                    "name": "海底秘境",
+                    "pipeline_override": {
+                        "xuanze_mijing_moshi": {
+                            "next": [
+                                "海底秘境-点击海底秘境"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "日月之井",
+                    "pipeline_override": {
+                        "xuanze_mijing_moshi": {
+                            "next": [
+                                "秘境降妖-点击日月之井"
+                            ]
+                        },
+                        "mijing_tongguan": {
+                            "enabled": false
                         }
                     }
                 }

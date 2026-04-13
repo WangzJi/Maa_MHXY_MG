@@ -24,7 +24,6 @@
         ]
     },
     "清理主界面使用-关闭": {
-        "pre_delay": 200,
         "recognition": "TemplateMatch",
         "template": "zonghe/zhujiemian_shiyong_cha.png",
         "roi": [
@@ -33,6 +32,7 @@
             50,
             46
         ],
+        "pre_delay": 200,
         "action": "Click",
         "post_delay": 500
     },
