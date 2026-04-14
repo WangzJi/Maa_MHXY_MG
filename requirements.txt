@@ -2,7 +2,7 @@ colorama
 Levenshtein
 loguru
 MaaAgentBinary
-MaaFw==5.8.1
+MaaFw==5.10.1
 numpy
 pillow
 python-Levenshtein
