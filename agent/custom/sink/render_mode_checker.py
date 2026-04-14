@@ -4,7 +4,8 @@ MuMu 模拟器渲染模式检查器
 仅在识别到 MuMu 模拟器时检查显卡渲染模式是否为 DirectX，
 如果不是则停止任务并输出警告。对于其他模拟器（如雷电）自动跳过。
 """
-
+import platform
+import os
 import json
 from pathlib import Path
 
@@ -13,33 +14,160 @@ from maa.tasker import Tasker, TaskerEventSink
 from maa.event_sink import NotificationType
 
 from utils.logger import logger
+def _find_config_in_vms(vms_dir: Path, port: int | None) -> Path | None:
+    """
+    在 vms 布局中查找配置文件。
+    支持实例目录名精确匹配或索引匹配。
+    """
+    target_index = None
+    if port is not None:
+        target_index = (port - 16384) // 32
+        logger.debug(f"[vms] 根据端口 {port} 计算实例索引: {target_index}")
+
+    exact_match = None
+    first_valid = None
+
+    try:
+        entries = list(vms_dir.iterdir())
+    except Exception as e:
+        logger.debug(f"遍历 vms 目录失败: {e}")
+        return None
+
+    for instance_dir in entries:
+        if not instance_dir.is_dir():
+            continue
+
+        config_file = instance_dir / "configs" / "customer_config.json"
+        if not config_file.exists():
+            continue
+
+        if first_valid is None:
+            first_valid = config_file
+
+        # 精确匹配：目录名以 -{index} 结尾，或包含端口对应索引
+        if target_index is not None:
+            if instance_dir.name.endswith(f"-{target_index}"):
+                exact_match = config_file
+                logger.debug(f"[vms] 精确匹配实例目录: {instance_dir}")
+                break
+
+    if exact_match:
+        return exact_match
+
+    if first_valid:
+        if target_index is not None:
+            logger.warning(
+                f"[vms] 未找到索引 {target_index} 的实例，使用首个有效配置: {first_valid}"
+            )
+        else:
+            logger.debug(f"[vms] 找到配置文件: {first_valid}")
+        return first_valid
+
+    return None
+
+
+def _find_config_in_nx_device(nx_device_dir: Path, port: int | None) -> Path | None:
+    """
+    在 nx_device 布局中查找配置文件。
+    结构可能是：nx_device/版本号/configs/customer_config.json 或 nx_device/版本号/vms/...
+    """
+    target_index = None
+    if port is not None:
+        target_index = (port - 16384) // 32
+        logger.debug(f"[nx_device] 根据端口 {port} 计算实例索引: {target_index}")
+
+    # 优先检查直接配置路径
+    for version_dir in nx_device_dir.iterdir():
+        if not version_dir.is_dir():
+            continue
+        direct_config = version_dir / "configs" / "customer_config.json"
+        if direct_config.exists():
+            logger.debug(f"[nx_device] 直接找到配置文件: {direct_config}")
+            return direct_config
+
+        # 检查该版本目录下是否有 vms 子目录
+        vms_sub = version_dir / "vms"
+        if vms_sub.exists():
+            result = _find_config_in_vms(vms_sub, port)
+            if result:
+                return result
+
+    # 若以上未找到，尝试将 nx_device_dir 视为 vms 的父目录
+    parent_vms = nx_device_dir.parent / "vms"
+    if parent_vms.exists():
+        return _find_config_in_vms(parent_vms, port)
+
+    return None
 
 
 def get_adb_info_from_controller(controller) -> tuple[str | None, str | None]:
     """
     从 MAA 控制器获取 ADB 路径和设备地址。
-    返回的 adb_path 可能是 str 或 Path 对象，统一转为 str。
+    优先从 controller.info 字典中读取，其次从直接属性获取。
     """
+    adb_path = None
+    address = None
+
+    # 1. 尝试从 controller.info 字典读取（最新版本数据通常在这里）
     try:
-        adb_path = getattr(controller, 'adb_path', None)
-        address = getattr(controller, 'address', None)
-        if adb_path and address:
-            return str(adb_path), address
-    except Exception:
-        pass
+        info = getattr(controller, 'info', None)
+        if isinstance(info, dict):
+            adb_path = info.get('adb_path')
+            address = info.get('adb_serial') or info.get('address') or info.get('serial')
+            if adb_path:
+                adb_path = str(adb_path)
+            if address:
+                address = str(address)
+                logger.debug(f"从 controller.info 获取到 ADB 信息: {adb_path}, {address}")
+    except Exception as e:
+        logger.debug(f"从 controller.info 读取失败: {e}")
 
-    try:
-        from maa.toolkit import Toolkit
-        devices = Toolkit.find_adb_devices()
-        if devices:
-            device = devices[0]
-            return str(device.adb_path), device.address
-    except Exception:
-        pass
+    # 2. 回退：直接属性读取
+    if not adb_path:
+        try:
+            raw_path = getattr(controller, 'adb_path', None)
+            if raw_path:
+                adb_path = str(raw_path)
+        except Exception:
+            pass
 
-    return None, None
+    if not address:
+        try:
+            raw_addr = getattr(controller, 'address', None)
+            if raw_addr:
+                address = str(raw_addr)
+        except Exception:
+            pass
 
+    # 3. 再尝试从其他属性补充 address
+    if adb_path and not address:
+        for attr in ('serial', 'device_serial', 'device', 'adb_serial'):
+            try:
+                val = getattr(controller, attr, None)
+                if val:
+                    address = str(val)
+                    break
+            except Exception:
+                pass
 
+    # 4. 若仍无 adb_path，尝试通过 Toolkit 获取
+    if not adb_path:
+        try:
+            from maa.toolkit import Toolkit
+            devices = Toolkit.find_adb_devices()
+            if devices:
+                device = devices[0]
+                adb_path = str(device.adb_path)
+                if not address:
+                    address = device.address
+                logger.debug(f"从 Toolkit 获取到 ADB 信息: {adb_path}, {address}")
+        except Exception as e:
+            logger.debug(f"从 Toolkit 获取 ADB 信息失败: {e}")
+
+    if not adb_path:
+        logger.debug("所有方式均无法获取 ADB 路径")
+
+    return adb_path, address
 def is_mumu_simulator(adb_path: str) -> bool:
     """
     根据 ADB 路径判断是否为 MuMu 模拟器。
@@ -51,45 +179,79 @@ def is_mumu_simulator(adb_path: str) -> bool:
     keywords = ["mumu", "net ease", "netease"]
     return any(kw in path_lower for kw in keywords)
 
-
 def find_mumu_install_path(adb_path: str) -> Path | None:
     """
-    根据 ADB 路径查找 MuMu 模拟器的安装根目录。
-    优先向上查找包含 'vms' 子目录的父目录（MuMu 12 核心特征）；
-    若无则回退到包含主程序文件的目录。
+    根据 ADB 路径查找 MuMu 模拟器的安装根目录（优先返回包含 vms 的最顶层）。
     """
     try:
-        # 确保转为 Path 对象并解析为绝对路径
         adb_path = Path(adb_path).resolve()
     except Exception as e:
         logger.debug(f"解析 ADB 路径失败: {adb_path}, 错误: {e}")
         return None
 
+    is_mac = platform.system() == "Darwin"
     current = adb_path.parent
     fallback = None
+    found_vms_dir = None
 
-    for i in range(6):
+    for i in range(10):
         try:
+            # 记录第一个找到的包含 vms 的目录（可能是较深的层级）
             if (current / "vms").is_dir():
-                logger.debug(f"在第 {i+1} 层找到 vms 目录，安装根目录: {current}")
-                return current
+                if found_vms_dir is None:
+                    found_vms_dir = current
+                    logger.debug(f"在第 {i+1} 层发现 vms 目录（暂存）: {current}")
+
+            # Windows: 如果遇到 nx_device，继续向上，因为真正的 vms 通常在上层
+            if not is_mac and (current / "nx_device").is_dir():
+                logger.debug(f"发现 nx_device 目录，继续向上查找顶层安装目录")
+
+            # 记录备用主程序所在目录
             if fallback is None:
-                if (current / "MuMuPlayer.exe").is_file() or (current / "MuMuManager.exe").is_file():
-                    fallback = current
-                    logger.debug(f"发现 MuMu 主程序文件，备用安装目录: {current}")
-            if (current / "emulator").is_dir():
-                logger.debug(f"发现 emulator 目录（MuMu 5.0），安装根目录: {current}")
-                return current
+                if is_mac:
+                    for exe_name in ["MuMuPlayer", "MuMuManager"]:
+                        if (current / exe_name).is_file():
+                            fallback = current
+                            break
+                    if current.suffix == ".app":
+                        fallback = current.parent
+                else:
+                    if (current / "MuMuPlayer.exe").is_file() or (current / "MuMuManager.exe").is_file():
+                        fallback = current
+                        logger.debug(f"发现主程序文件，备用根目录: {current}")
+
+                if (current / "emulator").is_dir():
+                    logger.debug(f"发现 emulator 目录（MuMu 5.0），安装根目录: {current}")
+                    return current
+
         except PermissionError:
-            logger.debug(f"访问目录 {current} 权限不足，跳过")
+            pass
         except Exception as e:
             logger.debug(f"检查目录 {current} 时出错: {e}")
 
+        # 如果已经找到 vms 且当前目录名为 "MuMuPlayer-12.0" 或包含 "mumu"，优先返回此处
+        if found_vms_dir and any(kw in current.name.lower() for kw in ["mumu", "player"]):
+            logger.debug(f"在包含 vms 的合理父目录停止: {current}")
+            return current
+
         current = current.parent
 
+    # 如果循环结束仍未返回，使用找到的第一个包含 vms 的目录
+    if found_vms_dir:
+        logger.debug(f"最终使用暂存的 vms 所在目录: {found_vms_dir}")
+        return found_vms_dir
+
+    # macOS 兜底
+    if is_mac:
+        support = Path.home() / "Library" / "Application Support"
+        for cand in ["MuMuPlayer12", "MuMuPlayer", "MuMu"]:
+            if (support / cand / "vms").is_dir():
+                return support / cand
+
     if fallback:
-        logger.debug(f"未找到 vms 目录，使用备用安装目录: {fallback}")
+        logger.debug(f"未找到 vms，使用备用目录: {fallback}")
         return fallback
+
     logger.debug("未找到任何 MuMu 特征目录或文件")
     return None
 
@@ -108,54 +270,45 @@ def extract_port_from_address(address: str) -> int | None:
 
 def find_config_file(install_path: Path, address: str | None = None) -> Path | None:
     """
-    在 MuMu 安装目录中查找 customer_config.json 文件。
-    如果提供了 address，则尝试根据端口精确定位到对应实例的配置文件。
+    在 MuMu 安装/数据目录中查找 customer_config.json。
+    优先检查 install_path 下的 vms，再检查 nx_device，最后检查上层 vms。
     """
-    vms_dir = install_path / "vms"
-    if not vms_dir.exists():
-        logger.debug(f"vms 目录不存在: {vms_dir}")
-        return None
+    is_mac = platform.system() == "Darwin"
+
+    # macOS 重定向到 Application Support
+    if is_mac:
+        mac_support = Path.home() / "Library" / "Application Support"
+        for cand in ["MuMuPlayer12", "MuMuPlayer", "MuMu"]:
+            if (mac_support / cand / "vms").is_dir():
+                install_path = mac_support / cand
+                break
 
     port = extract_port_from_address(address) if address else None
-    target_index = None
-    if port is not None:
-        target_index = (port - 16384) // 32
-        logger.debug(f"根据端口 {port} 计算得到目标实例索引: {target_index}")
 
-    exact_match = None
-    first_valid = None
+    # 1. 首先尝试 install_path 下的 vms（最常见）
+    vms_dir = install_path / "vms"
+    if vms_dir.exists():
+        result = _find_config_in_vms(vms_dir, port)
+        if result:
+            return result
 
-    for instance_dir in vms_dir.iterdir():
-        if not instance_dir.is_dir():
-            continue
+    # 2. 检查 install_path 下的 nx_device 布局
+    nx_device_dir = install_path / "nx_device"
+    if nx_device_dir.exists():
+        result = _find_config_in_nx_device(nx_device_dir, port)
+        if result:
+            return result
 
-        if target_index is not None:
-            if instance_dir.name.endswith(f"-{target_index}"):
-                config_file = instance_dir / "configs" / "customer_config.json"
-                if config_file.exists():
-                    exact_match = config_file
-                    break
-
-        if first_valid is None:
-            config_file = instance_dir / "configs" / "customer_config.json"
-            if config_file.exists():
-                first_valid = config_file
-
-    if exact_match:
-        logger.debug(f"找到精确匹配的配置文件: {exact_match}")
-        return exact_match
-    elif first_valid:
-        if target_index is not None:
-            logger.warning(
-                f"未找到索引为 {target_index} 的实例配置文件，将使用首个有效配置文件: {first_valid}"
-            )
-        else:
-            logger.debug(f"找到配置文件: {first_valid}")
-        return first_valid
+    # 3. 若 install_path 是 nx_device/版本号 这样的深层目录，尝试向上找 vms
+    if not vms_dir.exists() and install_path.parent.name.lower().startswith("mumu"):
+        upper_vms = install_path.parent / "vms"
+        if upper_vms.exists():
+            result = _find_config_in_vms(upper_vms, port)
+            if result:
+                return result
 
     logger.debug("未找到任何 customer_config.json 文件")
     return None
-
 
 def get_render_mode(config_path: Path) -> str | None:
     """
@@ -186,6 +339,8 @@ def get_render_mode(config_path: Path) -> str | None:
 
     logger.debug(f"无法从配置中提取渲染模式后端，choose={mode_choose}")
     return None
+
+
 
 
 @AgentServer.tasker_sink()
