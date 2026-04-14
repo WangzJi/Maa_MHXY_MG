@@ -704,9 +704,35 @@
                             "next": [
                                 "秘境降妖-点击日月之井"
                             ]
-                        },
-                        "mijing_tongguan": {
-                            "enabled": false
+                        }
+                    },
+                    "option": [
+                        "秘境-日月-结束关卡"
+                    ]
+                }
+            ]
+        },
+        "秘境-日月-结束关卡": {
+            "type": "select",
+            "description": "请自行判断退出关卡，只有在秘境自动停止到的关卡在可以实现结束。例如：在24关需要点击进入战斗等。",
+            "cases": [
+                {
+                    "name": "第25关",
+                    "pipeline_override": {
+                        "日月之井-指定关卡结束任务": {
+                            "expected": [
+                                "第25关"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "第24关",
+                    "pipeline_override": {
+                        "日月之井-指定关卡结束任务": {
+                            "expected": [
+                                "第24关"
+                            ]
                         }
                     }
                 }
