@@ -108,7 +108,10 @@
     },
     "活动-五行修业-已完成": {
         "recognition": "TemplateMatch",
-        "template": [],
+        "template": [
+            "wuxing/wuxing_yiwancheng1.png"
+        ],
+        "green_mask": true,
         "threshold": 0.9,
         "roi": [
             316,
@@ -116,7 +119,7 @@
             834,
             433
         ],
-        "pre_delay": 200,
+        "pre_delay": 500,
         "next": [
             "panduan_zhujiemian"
         ]
