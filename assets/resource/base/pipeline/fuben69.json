@@ -154,19 +154,38 @@
         ]
     },
     "点击地图-百晓仙子": {
-        "recognition": "OCR",
-        "expected": [
-            "百晓",
-            "仙子",
-            "晓仙",
-            "晓",
-            "百晓仙子"
-        ],
-        "roi": [
-            396,
-            354,
-            153,
-            46
+        "recognition": "Or",
+        "any_of": [
+            {
+                "recognition": "OCR",
+                "expected": [
+                    "百晓",
+                    "仙子",
+                    "晓仙",
+                    "晓",
+                    "百晓仙子"
+                ],
+                "roi": [
+                    396,
+                    354,
+                    153,
+                    46
+                ]
+            },
+            {
+                "recognition": "TemplateMatch",
+                "template": [
+                    "fuben/baixiao.png",
+                    "fuben/baixiao2.png",
+                    "fuben/baixiao3.png"
+                ],
+                "roi": [
+                    421,
+                    357,
+                    106,
+                    38
+                ]
+            }
         ],
         "action": "Click",
         "target_offset": [
@@ -175,7 +194,7 @@
             -4,
             -8
         ],
-        "post_delay": 2000,
+        "post_delay": 1000,
         "next": [
             "[JumpBack]再次点击地图百晓仙子",
             "百晓仙子-选择副本"
@@ -457,19 +476,38 @@
         ]
     },
     "点击地图-百晓仙子-50普通-1": {
-        "recognition": "OCR",
-        "expected": [
-            "百晓",
-            "仙子",
-            "晓仙",
-            "晓",
-            "百晓仙子"
-        ],
-        "roi": [
-            396,
-            354,
-            153,
-            46
+        "recognition": "Or",
+        "any_of": [
+            {
+                "recognition": "OCR",
+                "expected": [
+                    "百晓",
+                    "仙子",
+                    "晓仙",
+                    "晓",
+                    "百晓仙子"
+                ],
+                "roi": [
+                    396,
+                    354,
+                    153,
+                    46
+                ]
+            },
+            {
+                "recognition": "TemplateMatch",
+                "template": [
+                    "fuben/baixiao.png",
+                    "fuben/baixiao2.png",
+                    "fuben/baixiao3.png"
+                ],
+                "roi": [
+                    421,
+                    357,
+                    106,
+                    38
+                ]
+            }
         ],
         "action": "Click",
         "target_offset": [
@@ -478,7 +516,7 @@
             -4,
             -8
         ],
-        "post_delay": 2000,
+        "post_delay": 1000,
         "next": [
             "[JumpBack]再次点击地图百晓仙子",
             "百晓仙子-选择副本-50普通-1"
@@ -565,19 +603,38 @@
         ]
     },
     "点击地图-百晓仙子-50普通-2": {
-        "recognition": "OCR",
-        "expected": [
-            "百晓",
-            "仙子",
-            "晓仙",
-            "晓",
-            "百晓仙子"
-        ],
-        "roi": [
-            396,
-            354,
-            153,
-            46
+        "recognition": "Or",
+        "any_of": [
+            {
+                "recognition": "OCR",
+                "expected": [
+                    "百晓",
+                    "仙子",
+                    "晓仙",
+                    "晓",
+                    "百晓仙子"
+                ],
+                "roi": [
+                    396,
+                    354,
+                    153,
+                    46
+                ]
+            },
+            {
+                "recognition": "TemplateMatch",
+                "template": [
+                    "fuben/baixiao.png",
+                    "fuben/baixiao2.png",
+                    "fuben/baixiao3.png"
+                ],
+                "roi": [
+                    421,
+                    357,
+                    106,
+                    38
+                ]
+            }
         ],
         "action": "Click",
         "target_offset": [
@@ -586,7 +643,7 @@
             -4,
             -8
         ],
-        "post_delay": 2000,
+        "post_delay": 1000,
         "next": [
             "[JumpBack]再次点击地图百晓仙子",
             "百晓仙子-选择副本-50普通-2"
