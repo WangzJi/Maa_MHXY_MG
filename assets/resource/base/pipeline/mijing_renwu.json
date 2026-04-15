@@ -356,9 +356,7 @@
     },
     "日月之井-指定关卡结束任务": {
         "recognition": "OCR",
-        "expected": [
-            "第2关"
-        ],
+        "expected": [],
         "roi": [
             1012,
             169,

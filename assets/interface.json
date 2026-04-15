@@ -700,6 +700,12 @@
                 {
                     "name": "日月之井",
                     "pipeline_override": {
+                        "mijingxiangyao": {
+                            "next": [
+                                "xuanze_mijing_moshi",
+                                "秘境降妖-日月之井-继续挑战"
+                            ]
+                        },
                         "xuanze_mijing_moshi": {
                             "next": [
                                 "秘境降妖-点击日月之井"
