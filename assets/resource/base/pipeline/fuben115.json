@@ -17,7 +17,7 @@
             66,
             57
         ],
-        "post_delay": 3000,
+        "post_delay": 1000,
         "next": [
             "115识别位置-长安城-副本",
             "[JumpBack]打开大地图_69副本"
@@ -34,7 +34,7 @@
             117,
             31
         ],
-        "post_delay": 3000,
+        "post_delay": 1000,
         "next": [
             "115打开小地图_百晓仙子"
         ]
@@ -165,7 +165,7 @@
             52
         ],
         "action": "Click",
-        "post_delay": 4000,
+        "post_delay": 2000,
         "next": [
             "115进入50级侠士副本-成功",
             "[JumpBack]115进入侠士副本-等待队员同意",
@@ -209,7 +209,7 @@
             117,
             31
         ],
-        "pre_delay": 1000,
+        "pre_delay": 500,
         "action": "ClickKey",
         "key": [
             61
