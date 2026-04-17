@@ -223,9 +223,9 @@ class sjqy_tiku_V3(CustomRecognition):
             logger.info("没有识别到题目")
             # logger.info(f"未在题库中搜索到答案次数:{NotAnswerCount}，请反馈开发者填充题库。")
             return CustomRecognition.AnalyzeResult(box=(0,0,0,0),detail="答题结束")
-        all_results= reco_detail.all_results
+        filtered_results= reco_detail.filtered_results
         #按照box进行排序
-        sorted_results= sort_ocr_results_by_position(all_results)
+        sorted_results= sort_ocr_results_by_position(filtered_results)
         #整合题目
         ext=''
         for item in sorted_results:
