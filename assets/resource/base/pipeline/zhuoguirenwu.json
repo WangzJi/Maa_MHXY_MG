@@ -78,26 +78,44 @@
         ]
     },
     "点击钟馗": {
-        "recognition": "OCR",
-        "expected": [
-            "钟馗",
-            "钟道",
-            "钟",
-            "道"
+        "recognition": "Or",
+        "any_of": [
+            {
+                "recognition": "TemplateMatch",
+                "template": [
+                    "zonghe/xiaoditu_CA.png"
+                ],
+                "roi": [
+                    114,
+                    69,
+                    1040,
+                    630
+                ]
+            },
+            {
+                "recognition": "OCR",
+                "expected": [
+                    "钟馗",
+                    "钟道",
+                    "钟",
+                    "道"
+                ],
+                "roi": [
+                    357,
+                    391,
+                    72,
+                    43
+                ]
+            }
         ],
-        "roi": [
-            357,
-            391,
-            72,
-            43
-        ],
+        "pre_delay": 1000,
         "action": "Click",
         "post_delay": 3000,
-        "target_offset": [
-            0,
-            0,
-            -4,
-            -8
+        "target": [
+            377,
+            403,
+            38,
+            19
         ],
         "next": [
             "钟馗-捉鬼任务-循环",

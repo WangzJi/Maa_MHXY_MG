@@ -803,26 +803,44 @@
         ]
     },
     "日常抓鬼-点击钟馗": {
-        "recognition": "OCR",
-        "expected": [
-            "钟馗",
-            "钟道",
-            "钟",
-            "道"
+        "recognition": "Or",
+        "any_of": [
+            {
+                "recognition": "TemplateMatch",
+                "template": [
+                    "zonghe/xiaoditu_CA.png"
+                ],
+                "roi": [
+                    114,
+                    69,
+                    1040,
+                    630
+                ]
+            },
+            {
+                "recognition": "OCR",
+                "expected": [
+                    "钟馗",
+                    "钟道",
+                    "钟",
+                    "道"
+                ],
+                "roi": [
+                    357,
+                    391,
+                    72,
+                    43
+                ]
+            }
         ],
-        "roi": [
-            357,
-            391,
-            72,
-            43
-        ],
+        "pre_delay": 1000,
         "action": "Click",
         "post_delay": 3000,
-        "target_offset": [
-            0,
-            0,
-            -4,
-            -8
+        "target": [
+            377,
+            403,
+            38,
+            19
         ],
         "next": [
             "日常抓鬼-钟馗-捉鬼任务"
@@ -876,18 +894,35 @@
         ]
     },
     "抓鬼不足五人-点击钟馗": {
-        "recognition": "OCR",
-        "expected": [
-            "钟馗",
-            "钟道",
-            "钟",
-            "道"
-        ],
-        "roi": [
-            186,
-            157,
-            853,
-            426
+        "recognition": "Or",
+        "any_of": [
+            {
+                "recognition": "TemplateMatch",
+                "template": [
+                    "zhuagui/zhongkui.png"
+                ],
+                "roi": [
+                    294,
+                    102,
+                    583,
+                    386
+                ]
+            },
+            {
+                "recognition": "OCR",
+                "expected": [
+                    "钟馗",
+                    "钟道",
+                    "钟",
+                    "道"
+                ],
+                "roi": [
+                    186,
+                    157,
+                    853,
+                    426
+                ]
+            }
         ],
         "pre_delay": 1000,
         "action": "Click",
